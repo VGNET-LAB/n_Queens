@@ -5,11 +5,11 @@ N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This re
 ## 🎮 Python Game (4–20 Queens, Level-Based)  
 
 - Play the N-Queens puzzle as a **progressive level-based game**.  
-- 🎵 **Sound effects**:  
+- **Sound effects**:  
   - Success signal when completing a level.  
   - Unique sounds for correct and wrong queen placement.  
-- ✨ **Animations**: Console-based animations enhance the gameplay.  
-- 🧩 **Game Features**:  
+- **Animations**: Console-based animations enhance the gameplay.  
+- **Game Features**:  
   - Menu with level selection.  
   - Restart, hint, and undo buttons.  
   - Customizable queen styles to personalize your experience.  
@@ -17,7 +17,7 @@ N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This re
 
 ---
 
-## 🌐 Web Version (Solver & Visualizer)  
+## Web Version (Solver & Visualizer)  
 
 - Choose **N (4–20 queens)** and watch the solver find solutions automatically.  
 - Displays **all possible solutions** with visual chessboard placement.  
@@ -27,7 +27,7 @@ N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This re
 
 ---
 
-## ⚙️ Tech Stack  
+## Tech Stack  
 
 - **Python** – Core logic, game features, solver.  
 - **HTML, CSS, JavaScript** – Web-based visual interface.  
@@ -35,7 +35,7 @@ N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This re
 
 ---
 
-## 🎯 Why this project?  
+## Why this project?  
 
 - A fun and interactive way to explore the **N-Queens puzzle**.  
 - Combines **gameplay, visualization, and algorithmic learning**.  
@@ -44,7 +44,7 @@ N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This re
 
 ---
 
-## 🚀 Quick Start  
+## Quick Start  
 
 ```bash
 # Clone the repository
