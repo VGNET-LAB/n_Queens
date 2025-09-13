@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Queens Problem Solver</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js for tree visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .queen-icon {
+            font-size: 3rem; /* Adjust icon size */
+            line-height: 1; /* Center vertically */
+            -webkit-text-stroke: 1px black;
+            -webkit-text-fill-color: #fce8a6; /* Gold color */
+        }
+        .board {
+            display: grid;
+            border: 4px solid #1f2937;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: 100%;
+        }
+        .cell {
+            width: 100%;
+            padding-bottom: 100%; /* Creates square cells */
+            position: relative;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .queen-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .text-rose-gold {
+            color: #B76E79;
+        }
+        .text-deep-blue {
+            color: #00008B;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        /* Custom scrollbar for search rules */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Responsive container for the main board */
+        .main-board-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 90vh; /* Ensures it fits on vertical screens */
+            aspect-ratio: 1 / 1;
+            margin: auto;
+        }
+
+        .solution-board {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .node circle {
+            fill: #999;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+
+        .node text {
+            font: 12px sans-serif;
+            fill: #555;
+        }
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+
+        .solution-node circle {
+            stroke: gold !important;
+            stroke-width: 3px !important;
+        }
+
+        .solution-link {
+            stroke: #4CAF50 !important; /* Green color for solution path */
+            stroke-width: 3px !important;
+        }
+        
+        /* Style for the SVG container for the tree */
+        #tree-container {
+            width: 100%;
+            height: 600px;
+            overflow: auto;
+            margin-top: 2rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Modal for popup messages -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3 id="modal-title" class="text-xl font-bold mb-2"></h3>
+            <p id="modal-text" class="text-gray-700"></p>
+        </div>
+    </div>
+
+    <!-- Page 1: Splash Screen -->
+    <section id="page1" class="flex flex-col items-center justify-center text-center">
+        <!-- Replaced the SVG logo with an <img> tag using a placeholder image -->
+        <!-- NOTE: Local image files like `logo.jpg` cannot be accessed directly in this web environment. -->
+        <!-- You can replace this URL with your own hosted logo link. -->
+        <div class="absolute top-4 left-4">
+            <img src="https://placehold.co/64x64/00008B/FFFFFF/png?text=LOGO" alt="Logo" class="w-16 h-16 rounded-lg shadow-md">
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black text-rose-gold drop-shadow-lg mb-8 transition-all duration-500 transform hover:scale-105">
+            N-QUEEN'S PROBLEM
+        </h1>
+        <button id="go-btn" class="w-24 h-24 bg-green-500 hover:bg-green-600 transition-all duration-300 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-xl">
+            GO
+        </button>
+        <p class="absolute bottom-4 text-sm text-deep-blue">BY HASNAT</p>
+    </section>
+
+    <!-- Page 2: Setup Screen -->
+    <section id="page2" class="hidden flex-col items-center justify-center w-full max-w-4xl p-4 md:p-8">
+        <h2 class="text-4xl text-deep-blue font-bold mb-12">Automated Solver Setup</h2>
+        <div class="flex flex-col md:flex-row w-full justify-between items-start md:items-center">
+            <!-- Left side: Rules & Control -->
+            <div class="md:w-1/2 p-4 md:p-8 space-y-8">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-200">
+                    <h3 class="text-2xl text-deep-blue font-semibold mb-4">N-Queens Problem Rules:</h3>
+                    <ol class="list-decimal list-inside text-deep-blue space-y-2">
+                        <li>A queen can attack horizontally, vertically, and diagonally.</li>
+                        <li>No two queens can be placed in the same row.</li>
+                        <li>No two queens can be placed in the same column.</li>
+                        <li>No two queens can be placed on the same diagonal.</li>
+                    </ol>
+                </div>
+                <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-200">
+                    <h3 class="text-2xl text-deep-blue font-semibold mb-4">Select Number of Queens:</h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="range" id="queen-count" min="4" max="20" value="8" class="w-full">
+                        <span id="queen-count-value" class="text-3xl text-rose-gold font-bold">8</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side: Algorithm Selection & Controls -->
+            <div class="md:w-1/2 p-4 md:p-8 space-y-8">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-200">
+                    <h3 class="text-2xl text-deep-blue font-semibold mb-4">Select Algorithm:</h3>
+                    <select id="solver-algo" class="w-full p-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-deep-blue transition-all">
+                        <option value="backtracking">Backtracking (Recommended)</option>
+                        <option value="dfs">Depth-First Search (DFS)</option>
+                        <option value="bfs">Breadth-First Search (BFS)</option>
+                        <option value="astar">A* Search (Heuristic-based)</option>
+                    </select>
+                    <p class="mt-2 text-sm text-gray-500">Backtracking is the most common and efficient for this problem.</p>
+                </div>
+                
+                <div class="flex justify-center md:justify-end">
+                    <button id="start-solver-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105">
+                        GO
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Page 3: Solver & Visualization -->
+    <section id="page3" class="hidden flex-col items-center justify-center w-full p-4 md:p-8">
+        <h2 class="text-4xl text-deep-blue font-bold mb-4 text-center">Solving N-Queens...</h2>
+        <div class="flex items-center justify-center space-x-4 text-lg text-deep-blue font-medium mb-8">
+            <span id="current-queens">0 Queens Placed</span>
+            <span id="solution-count">0 Solutions Found</span>
+        </div>
+        <div class="main-board-container">
+            <div id="board-container" class="board aspect-square">
+                <!-- Board will be rendered here by JS -->
+            </div>
+        </div>
+        
+        <!-- Controls & Status -->
+        <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
+            <button id="pause-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Pause</button>
+            <button id="reset-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Reset</button>
+
+            <!-- Speed Control Dropdown -->
+            <div class="flex items-center space-x-2">
+                <label for="speed-select" class="text-deep-blue font-bold">Speed:</label>
+                <select id="speed-select" class="p-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-deep-blue transition-all">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                    <option value="8">8x</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="solution-path" class="mt-8 w-full max-w-2xl bg-gray-100 p-6 rounded-xl border-2 border-gray-200 hidden">
+            <h3 class="text-xl text-deep-blue font-semibold mb-4">Solutions Found:</h3>
+            <div id="solution-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+
+        <!-- New: Tree Visualization Section -->
+        <div id="tree-visualization-section" class="mt-8 w-full text-center hidden">
+            <h3 class="text-2xl text-deep-blue font-semibold mb-4">Solution Tree Path</h3>
+            <div id="tree-container"></div>
+        </div>
+    </section>
+
+    <script>
+        // State management
+        const state = {
+            currentPage: 'page1',
+            N: 8,
+            selectedAlgorithm: 'backtracking',
+            isSolving: false,
+            solutions: [],
+            solutionTree: null,
+            isPaused: false,
+            animationSpeed: 1, // New: Added state for animation speed
+            boardState: [],
+        };
+
+        const elements = {
+            page1: document.getElementById('page1'),
+            page2: document.getElementById('page2'),
+            page3: document.getElementById('page3'),
+            goBtn: document.getElementById('go-btn'),
+            queenCountInput: document.getElementById('queen-count'),
+            queenCountValue: document.getElementById('queen-count-value'),
+            solverAlgoSelect: document.getElementById('solver-algo'),
+            startSolverBtn: document.getElementById('start-solver-btn'),
+            boardContainer: document.getElementById('board-container'),
+            currentQueensSpan: document.getElementById('current-queens'),
+            solutionCountSpan: document.getElementById('solution-count'),
+            pauseBtn: document.getElementById('pause-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            solutionPath: document.getElementById('solution-path'),
+            solutionList: document.getElementById('solution-list'),
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalText: document.getElementById('modal-text'),
+            treeVisualizationSection: document.getElementById('tree-visualization-section'),
+            treeContainer: document.getElementById('tree-container'),
+            speedSelect: document.getElementById('speed-select'), // New: Reference to the speed selector
+        };
+
+        // --- UI Logic ---
+        function switchPage(pageId) {
+            elements.page1.classList.add('hidden');
+            elements.page2.classList.add('hidden');
+            elements.page3.classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+            state.currentPage = pageId;
+        }
+
+        function showModal(title, text) {
+            elements.modalTitle.innerText = title;
+            elements.modalText.innerText = text;
+            elements.modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            elements.modal.style.display = 'none';
+        }
+
+        // --- Game Logic ---
+        function isSafe(board, row, col, N) {
+            // Check row on left side
+            for (let i = 0; i < col; i++) {
+                if (board[row][i] === 1) return false;
+            }
+            // Check upper diagonal on left side
+            for (let i = row, j = col; i >= 0 && j >= 0; i--, j--) {
+                if (board[i][j] === 1) return false;
+            }
+            // Check lower diagonal on left side
+            for (let i = row, j = col; j >= 0 && i < N; i++, j--) {
+                if (board[i][j] === 1) return false;
+            }
+            return true;
+        }
+
+        function renderBoard(board, container) {
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${board.length}, minmax(0, 1fr))`;
+            
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board.length; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell', 'relative');
+                    cell.classList.add((i + j) % 2 === 0 ? 'bg-stone-200' : 'bg-stone-600');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    
+                    if (board[i][j] === 1) {
+                        const queenContainer = document.createElement('div');
+                        queenContainer.classList.add('queen-container');
+                        queenContainer.innerHTML = '&#x2655;'; // Queen emoji
+                        cell.appendChild(queenContainer);
+                    }
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        async function visualizePlacement(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (!cell) return;
+
+            // Animate consideration
+            cell.style.backgroundColor = '#9CA3AF'; // A neutral gray for "testing"
+            await new Promise(res => setTimeout(res, 200));
+            cell.style.backgroundColor = ''; // Reset color
+        }
+        
+        // --- Solver and Tree Generation ---
+        async function solveNQueens() {
+            state.isSolving = true;
+            state.solutions = [];
+            state.solutionTree = { name: "Start", children: [], boardState: [], col: -1 };
+            state.isPaused = false;
+            elements.solutionPath.classList.add('hidden');
+            elements.solutionList.innerHTML = '';
+            
+            const board = Array(state.N).fill(null).map(() => Array(state.N).fill(0));
+            state.boardState = board;
+            renderBoard(state.boardState, elements.boardContainer);
+            
+            elements.currentQueensSpan.innerText = '0 Queens Placed';
+            elements.solutionCountSpan.innerText = '0 Solutions Found';
+
+            // IMPORTANT: The delay function is key to speeding up the entire search process.
+            // By dividing the base delay (e.g., 50ms) by the animation speed (e.g., 8x),
+            // we make the pauses between each step shorter, thus completing the algorithm faster.
+            const delay = (ms) => new Promise(res => setTimeout(res, ms / state.animationSpeed));
+            const pauseCheck = () => new Promise(resolve => {
+                const interval = setInterval(() => {
+                    if (!state.isPaused) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 100);
+            });
+            
+            const selectedAlgo = elements.solverAlgoSelect.value;
+            
+            if (selectedAlgo === 'astar') {
+                 showModal(
+                    "Algorithm Not Suitable",
+                    "A* is a heuristic-based search algorithm primarily used for finding the shortest path between nodes. We will proceed with Backtracking instead."
+                );
+                await delay(3000);
+            }
+
+            // Backtracking Solver with Tree Generation
+            async function solveBacktracking(col, parentNode) {
+                if (state.isPaused) await pauseCheck();
+                
+                if (col >= state.N) {
+                    // A solution is found, mark this node as a solution
+                    parentNode.isSolution = true;
+                    state.solutions.push(JSON.parse(JSON.stringify(state.boardState)));
+                    elements.solutionCountSpan.innerText = `${state.solutions.length} Solutions Found`;
+                    return true;
+                }
+                
+                for (let i = 0; i < state.N; i++) {
+                    if (state.isPaused) await pauseCheck();
+                    await visualizePlacement(i, col);
+                    
+                    if (isSafe(state.boardState, i, col, state.N)) {
+                        state.boardState[i][col] = 1;
+                        elements.currentQueensSpan.innerText = `${col + 1} Queens Placed`;
+                        renderBoard(state.boardState, elements.boardContainer);
+                        await delay(50);
+                        
+                        // Create a new node in the tree for this placement
+                        const newNode = {
+                            name: `(${i}, ${col})`,
+                            children: [],
+                            boardState: JSON.parse(JSON.stringify(state.boardState)),
+                            col: col
+                        };
+                        parentNode.children.push(newNode);
+                        
+                        await solveBacktracking(col + 1, newNode);
+                        
+                        state.boardState[i][col] = 0; // Backtrack
+                        renderBoard(state.boardState, elements.boardContainer);
+                        elements.currentQueensSpan.innerText = `${col} Queens Placed`;
+                        await delay(10);
+                    }
+                }
+                return false;
+            }
+
+            await solveBacktracking(0, state.solutionTree);
+            
+            // After solving, mark the successful solution paths
+            markSolutionPaths(state.solutionTree);
+
+            // End of solving
+            state.isSolving = false;
+            elements.currentQueensSpan.innerText = `Search Completed.`;
+            elements.treeVisualizationSection.classList.remove('hidden');
+            renderTree();
+        }
+
+        /**
+         * Recursively traverses the tree and marks nodes on a successful solution path.
+         * A node is on a solution path if it has an `isSolution` property or if any of its children are on a solution path.
+         * @param {object} node - The current node in the tree.
+         * @returns {boolean} - True if the current node or any of its descendants is a solution node.
+         */
+        function markSolutionPaths(node) {
+            if (node.isSolution) {
+                node.isSolutionPath = true;
+                return true;
+            }
+            if (node.children) {
+                let onSolutionPath = false;
+                for (const child of node.children) {
+                    if (markSolutionPaths(child)) {
+                        onSolutionPath = true;
+                    }
+                }
+                node.isSolutionPath = onSolutionPath;
+                return onSolutionPath;
+            }
+            return false;
+        }
+
+        // --- D3.js Tree Visualization ---
+        function renderTree() {
+            elements.treeContainer.innerHTML = ''; // Clear previous tree
+            
+            const margin = { top: 20, right: 90, bottom: 30, left: 90 };
+            const containerWidth = elements.treeContainer.clientWidth;
+            const containerHeight = elements.treeContainer.clientHeight;
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
+
+            const svg = d3.select("#tree-container").append("svg")
+                .attr("width", containerWidth)
+                .attr("height", containerHeight)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const treemap = d3.tree().size([height, width]);
+            const root = d3.hierarchy(state.solutionTree, d => d.children);
+            root.x0 = height / 2;
+            root.y0 = 0;
+
+            function update(source) {
+                const treeData = treemap(root);
+                const nodes = treeData.descendants().reverse();
+                const links = treeData.links();
+                
+                nodes.forEach(d => { d.y = d.depth * 180; }); // Adjust node spacing
+
+                const node = svg.selectAll("g.node")
+                    .data(nodes, d => d.id || (d.id = d.data.name + d.depth));
+                
+                const nodeEnter = node.enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", d => `translate(${source.y0},${source.x0})`)
+                    .on("click", (event, d) => {
+                        if (d.data.isSolution) {
+                            showSolutionInModal(d.data.boardState);
+                        }
+                    });
+
+                // Add a small rectangle to represent the board
+                nodeEnter.append("rect")
+                    .attr("width", 30)
+                    .attr("height", 30)
+                    .attr("x", -15)
+                    .attr("y", -15)
+                    .attr("rx", 5)
+                    // Color the stroke based on whether it's on a solution path or is a solution
+                    .attr("stroke", d => d.data.isSolution ? "gold" : (d.data.isSolutionPath ? "green" : "#ccc"))
+                    .attr("stroke-width", d => d.data.isSolution || d.data.isSolutionPath ? 3 : 1)
+                    .attr("fill", "#fff")
+                    .clone(true).lower();
+
+                // Add text label
+                nodeEnter.append("text")
+                    .attr("y", -20)
+                    .attr("text-anchor", "middle")
+                    .text(d => d.data.name !== "Start" ? d.data.name : "Start");
+
+                // Transition nodes to their new position
+                const nodeUpdate = nodeEnter.merge(node)
+                    .transition()
+                    .duration(500)
+                    .attr("transform", d => `translate(${d.y},${d.x})`);
+
+                const nodeExit = node.exit().transition()
+                    .duration(500)
+                    .attr("transform", d => `translate(${source.y},${source.x})`)
+                    .remove();
+
+                const link = svg.selectAll("path.link")
+                    .data(links, d => d.target.id);
+
+                const linkEnter = link.enter().insert("path", "g")
+                    .attr("class", d => `link ${d.target.data.isSolutionPath ? 'solution-link' : ''}`)
+                    .attr("d", d => {
+                        const o = { x: source.x0, y: source.y0 };
+                        return `M${o.y},${o.x}C${o.y},${o.x} ${o.y},${o.x} ${o.y},${o.x}`;
+                    });
+                
+                linkEnter.merge(link)
+                    .transition()
+                    .duration(500)
+                    .attr("d", d3.linkHorizontal()
+                        .x(d => d.y)
+                        .y(d => d.x));
+
+                link.exit().transition()
+                    .duration(500)
+                    .attr("d", d => {
+                        const o = { x: source.x, y: source.y };
+                        return `M${o.y},${o.x}C${o.y},${o.x} ${o.y},${o.x} ${o.y},${o.x}`;
+                    })
+                    .remove();
+
+                nodes.forEach(d => {
+                    d.x0 = d.x;
+                    d.y0 = d.y;
+                });
+            }
+
+            update(root);
+        }
+
+        // --- Modal Functionality ---
+        function showSolutionInModal(board) {
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content', 'p-6', 'rounded-xl', 'bg-white', 'shadow-2xl', 'text-center');
+            modalContent.innerHTML = `<span class="close-button" onclick="closeModal()">&times;</span>
+                                      <h3 class="text-2xl font-bold mb-4 text-deep-blue">Final Solution</h3>`;
+            
+            const boardDiv = document.createElement('div');
+            boardDiv.classList.add('board', 'w-full', 'aspect-square', 'mx-auto');
+            renderBoard(board, boardDiv);
+
+            modalContent.appendChild(boardDiv);
+            elements.modal.innerHTML = '';
+            elements.modal.appendChild(modalContent);
+            elements.modal.style.display = 'block';
+        }
+
+        // --- Event Listeners ---
+        elements.goBtn.addEventListener('click', () => switchPage('page2'));
+        
+        elements.queenCountInput.addEventListener('input', (event) => {
+            state.N = parseInt(event.target.value, 10);
+            elements.queenCountValue.innerText = state.N;
+        });
+
+        elements.startSolverBtn.addEventListener('click', () => {
+            switchPage('page3');
+            solveNQueens();
+        });
+
+        elements.pauseBtn.addEventListener('click', () => {
+            state.isPaused = !state.isPaused;
+            elements.pauseBtn.innerText = state.isPaused ? 'Resume' : 'Pause';
+            elements.pauseBtn.classList.toggle('bg-yellow-500', !state.isPaused);
+            elements.pauseBtn.classList.toggle('hover:bg-yellow-600', !state.isPaused);
+            elements.pauseBtn.classList.toggle('bg-green-500', state.isPaused);
+            elements.pauseBtn.classList.toggle('hover:bg-green-600', state.isPaused);
+        });
+
+        elements.resetBtn.addEventListener('click', () => {
+            window.location.reload(); // Simple way to reset everything
+        });
+
+        // New: Event listener for the speed control
+        elements.speedSelect.addEventListener('change', (event) => {
+            state.animationSpeed = parseInt(event.target.value, 10);
+        });
+
+    </script>
+</body>
+</html>
