@@ -2,7 +2,7 @@
 N-Queens Puzzle Game &amp; Web Solver – Python  and Web based Project  This repository contains two interactive versions of the classic N-Queens problem:
 
 
-## 🎮 Python Game (4–20 Queens, Level-Based)  
+## Python Game (4–20 Queens, Level-Based)  
 
 - Play the N-Queens puzzle as a **progressive level-based game**.  
 - **Sound effects**:  
